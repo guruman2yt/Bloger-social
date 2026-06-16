@@ -88,9 +88,29 @@ export default function ArticleContent({
       if (inCode) {
         currentBlock.push(line);
       } else {
-        if (line.trim() === '') {
+        const trimmed = line.trim();
+        const isLineList = trimmed.startsWith('* ') || trimmed.startsWith('- ') || /^\d+\.\s/.test(trimmed);
+        const isCurrentBlockList = currentBlock.length > 0 && (
+          currentBlock[0].trim().startsWith('* ') ||
+          currentBlock[0].trim().startsWith('- ') ||
+          /^\d+\.\s/.test(currentBlock[0].trim())
+        );
+
+        if (trimmed === '') {
           commitBlock();
+        } else if (trimmed.startsWith('# ') || trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
+          commitBlock();
+          currentBlock.push(line);
+          commitBlock();
+        } else if (isLineList) {
+          if (!isCurrentBlockList) {
+            commitBlock();
+          }
+          currentBlock.push(line);
         } else {
+          if (isCurrentBlockList) {
+            commitBlock();
+          }
           currentBlock.push(line);
         }
       }

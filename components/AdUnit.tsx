@@ -119,6 +119,27 @@ export default function AdUnit({
     trackImpression();
   }, [slot, activeNetwork, isEnabled]);
 
+  // Production dynamic script loader for Adsterra and Monetag
+  useEffect(() => {
+    if (isLocalhost || !isEnabled || !adRef.current) return;
+
+    if (activeNetwork === 'addstra' || activeNetwork === 'monetag') {
+      const scriptUrl = activeNetwork === 'addstra' ? addstraVal : monetagVal;
+      if (!scriptUrl) return;
+
+      // Clear previous content to avoid duplicate ads on re-render
+      adRef.current.innerHTML = '';
+
+      // Create and append the ad network script element
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = scriptUrl;
+      script.async = true;
+      
+      adRef.current.appendChild(script);
+    }
+  }, [activeNetwork, isEnabled, isLocalhost, addstraVal, monetagVal]);
+
   const handleAdClick = async () => {
     if (!isEnabled) return;
     try {
@@ -140,7 +161,7 @@ export default function AdUnit({
   // 3. In production, load actual ad network scripts
   if (!isLocalhost) {
     return (
-      <div ref={adRef} className="ad-container my-6 flex justify-center w-full">
+      <div ref={adRef} className="ad-container my-6 flex justify-center w-full min-h-[90px] text-center">
         {activeNetwork === 'adsense' && (
           <>
             <Script
@@ -160,28 +181,6 @@ export default function AdUnit({
             <script dangerouslySetInnerHTML={{
               __html: `try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.error(e); }`
             }} />
-          </>
-        )}
-        {activeNetwork === 'addstra' && (
-          <>
-            <Script
-              src={addstraVal}
-              strategy="afterInteractive"
-            />
-            <div id={`addstra-container-${slot}`} className="w-full text-center text-xs text-gray-500 py-4 border border-dashed border-gray-800">
-              [Adsterra Banner: {slot}]
-            </div>
-          </>
-        )}
-        {activeNetwork === 'monetag' && (
-          <>
-            <Script
-              src={monetagVal}
-              strategy="afterInteractive"
-            />
-            <div id={`monetag-container-${slot}`} className="w-full text-center text-xs text-gray-500 py-4 border border-dashed border-gray-800">
-              [Monetag Banner: {slot}]
-            </div>
           </>
         )}
       </div>
