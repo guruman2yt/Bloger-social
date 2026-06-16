@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         slug: baseSlug,
         summary,
         content,
-        coverImage: coverImage || 'https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=800&auto=format&fit=crop&q=60',
+        coverImage: coverImage,
         category,
         published: published ?? false,
         readTime: Number(readTime) || Math.max(1, Math.round(content.split(/\s+/).length / 200)),

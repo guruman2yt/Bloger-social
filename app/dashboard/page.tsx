@@ -78,6 +78,16 @@ export default function Dashboard() {
   const [aiError, setAiError] = useState('');
   const [aiSuccess, setAiSuccess] = useState(false);
 
+  // Bulk Generator States
+  const [aiMode, setAiMode] = useState<'single' | 'bulk'>('single');
+  const [bulkCount, setBulkCount] = useState<number>(5);
+  const [bulkCategory, setBulkCategory] = useState<string>('all');
+  const [bulkTopics, setBulkTopics] = useState<{ topic: string; category: string; expectedCpc: number; volume: string; reason: string; selected?: boolean }[]>([]);
+  const [bulkDiscovering, setBulkDiscovering] = useState(false);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [bulkCurrentIndex, setBulkCurrentIndex] = useState(0);
+
   // Ad Settings States
   const [adDensity, setAdDensity] = useState<'low' | 'balanced' | 'max-revenue'>('balanced');
   const [activeNetwork, setActiveNetwork] = useState<'adsense' | 'addstra' | 'monetag'>('adsense');
@@ -436,6 +446,108 @@ export default function Dashboard() {
     } finally {
       setAiGenerating(false);
     }
+  };
+
+  // Discover currently trending topics using Gemini
+  const handleDiscoverTrends = async () => {
+    setBulkDiscovering(true);
+    setAiError('');
+    setAiProgress(['Analyzing search engine trends for trending topics...']);
+    try {
+      const response = await fetch('/api/posts/trends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          count: bulkCount,
+          category: bulkCategory
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setBulkTopics(data.topics.map((t: any) => ({ ...t, selected: true })));
+        setAiProgress(['Trending topics discovered successfully! Select which articles to write and click "Generate and Publish".']);
+      } else {
+        setAiError(data.error || 'Failed to discover trending topics.');
+      }
+    } catch (err) {
+      console.error(err);
+      setAiError('Connection error occurred while discovering trends.');
+    } finally {
+      setBulkDiscovering(false);
+    }
+  };
+
+  // Run sequential post generation queue for all selected trending topics
+  const handleBulkGenerate = async () => {
+    const selected = bulkTopics.filter(t => t.selected);
+    if (selected.length === 0) {
+      setAiError('Please select at least one topic to generate.');
+      return;
+    }
+
+    setBulkGenerating(true);
+    setAiGenerating(true);
+    setAiError('');
+    setAiSuccess(false);
+    setBulkProgress(0);
+    setBulkCurrentIndex(0);
+    setAiProgress([`Starting bulk generation of ${selected.length} articles...`]);
+
+    for (let i = 0; i < selected.length; i++) {
+      const item = selected[i];
+      setBulkCurrentIndex(i + 1);
+      setAiProgress((prev) => [...prev, `[Post ${i + 1}/${selected.length}] Researching & generating: "${item.topic}"...`]);
+
+      try {
+        const response = await fetch('/api/posts/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: item.topic,
+            searchWeb: aiSearchWeb,
+            published: aiPublished
+          })
+        });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setAiProgress((prev) => [...prev, `✅ [Post ${i + 1}/${selected.length}] Completed: "${data.post.title}"`]);
+          
+          // Confetti particle burst for each successful generation
+          confetti({
+            particleCount: 25,
+            spread: 35,
+            origin: { y: 0.8 }
+          });
+        } else {
+          setAiProgress((prev) => [...prev, `❌ [Post ${i + 1}/${selected.length}] Failed: "${item.topic}" - ${data.error || 'Unknown error'}`]);
+        }
+      } catch (err) {
+        setAiProgress((prev) => [...prev, `❌ [Post ${i + 1}/${selected.length}] Connection error for: "${item.topic}"`]);
+      }
+
+      setBulkProgress(Math.round(((i + 1) / selected.length) * 100));
+    }
+
+    setAiProgress((prev) => [...prev, `🎉 Bulk post generation completed! Generated ${selected.length} articles.`]);
+    setAiSuccess(true);
+    confetti({
+      particleCount: 100,
+      spread: 60,
+      origin: { y: 0.7 }
+    });
+
+    // Refresh dashboard statistics and post list
+    fetchData();
+
+    // Reset and return to post manager list after delay
+    setTimeout(() => {
+      setActiveTab('posts');
+      setAiSuccess(false);
+      setBulkGenerating(false);
+      setAiGenerating(false);
+      setBulkTopics([]);
+      setAiProgress([]);
+    }, 4000);
   };
 
   // Trigger manual daily automation RSS check
@@ -1184,67 +1296,266 @@ export default function Dashboard() {
                 <Sparkles className="h-5 w-5 text-indigo-400" />
                 <span>AI Automated Post Creator</span>
               </h3>
-              <p className="text-xs text-gray-400 mb-6 leading-relaxed">
-                Provide a heading or topic. The system will search DuckDuckGo, extract contents from top search links to gather up-to-date details, and utilize Gemini to generate a valuable, publication-ready technical post.
-              </p>
-
-              <form onSubmit={handleAIGenerate} className="space-y-5">
-                <div>
-                  <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500 mb-1.5">Article Heading / Topic</label>
-                  <input
-                    type="text"
-                    value={aiTopic}
-                    onChange={(e) => setAiTopic(e.target.value)}
-                    placeholder="e.g. Next.js 16 compiler features and performance guide"
-                    className="w-full rounded-xl border border-[rgba(99,102,241,0.15)] bg-indigo-950/15 px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50"
-                    disabled={aiGenerating}
-                    required
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 py-2">
-                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
-                    <input
-                      type="checkbox"
-                      checked={aiSearchWeb}
-                      onChange={(e) => setAiSearchWeb(e.target.checked)}
-                      className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
-                      disabled={aiGenerating}
-                    />
-                    <span>Scrape web search for up-to-date facts (Recommended)</span>
-                  </label>
-
-                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
-                    <input
-                      type="checkbox"
-                      checked={aiPublished}
-                      onChange={(e) => setAiPublished(e.target.checked)}
-                      className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
-                      disabled={aiGenerating}
-                    />
-                    <span>Publish immediately (visible to public)</span>
-                  </label>
-                </div>
-
-                {aiError && (
-                  <p className="text-xs text-red-400 font-semibold">{aiError}</p>
-                )}
-
+              
+              {/* Mode Selection Tabs */}
+              <div className="flex bg-gray-950/80 p-1 rounded-xl border border-gray-800/50 mb-6 max-w-xs">
                 <button
-                  type="submit"
-                  disabled={aiGenerating}
-                  className="w-full flex items-center justify-center space-x-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-950/40 py-3 text-xs font-semibold tracking-wide text-white shadow-lg shadow-indigo-600/10 transition-all duration-300"
+                  type="button"
+                  onClick={() => {
+                    setAiMode('single');
+                    setAiError('');
+                    setAiProgress([]);
+                  }}
+                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
+                    aiMode === 'single'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  disabled={aiGenerating || bulkDiscovering}
                 >
-                  <Sparkles className="h-4 w-4" />
-                  <span>{aiGenerating ? 'Generating...' : 'Research & Generate Blog Post'}</span>
+                  Single Post
                 </button>
-              </form>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAiMode('bulk');
+                    setAiError('');
+                    setAiProgress([]);
+                  }}
+                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
+                    aiMode === 'bulk'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                  disabled={aiGenerating || bulkDiscovering}
+                >
+                  Bulk Creator
+                </button>
+              </div>
 
-              {/* Progress Feedback Log */}
+              {aiMode === 'single' ? (
+                <>
+                  <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                    Provide a heading or topic. The system will search DuckDuckGo, extract contents from top search links to gather up-to-date details, and utilize Gemini to generate a valuable, publication-ready technical post.
+                  </p>
+
+                  <form onSubmit={handleAIGenerate} className="space-y-5">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500 mb-1.5">Article Heading / Topic</label>
+                      <input
+                        type="text"
+                        value={aiTopic}
+                        onChange={(e) => setAiTopic(e.target.value)}
+                        placeholder="e.g. Next.js 16 compiler features and performance guide"
+                        className="w-full rounded-xl border border-[rgba(99,102,241,0.15)] bg-indigo-950/15 px-4 py-3 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50"
+                        disabled={aiGenerating}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 py-2">
+                      <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={aiSearchWeb}
+                          onChange={(e) => setAiSearchWeb(e.target.checked)}
+                          className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                          disabled={aiGenerating}
+                        />
+                        <span>Scrape web search for up-to-date facts (Recommended)</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={aiPublished}
+                          onChange={(e) => setAiPublished(e.target.checked)}
+                          className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                          disabled={aiGenerating}
+                        />
+                        <span>Publish immediately (visible to public)</span>
+                      </label>
+                    </div>
+
+                    {aiError && (
+                      <p className="text-xs text-red-400 font-semibold">{aiError}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={aiGenerating}
+                      className="w-full flex items-center justify-center space-x-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-950/40 py-3 text-xs font-semibold tracking-wide text-white shadow-lg shadow-indigo-600/10 transition-all duration-300"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span>{aiGenerating ? 'Generating...' : 'Research & Generate Blog Post'}</span>
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+                    Auto-detect global trends across diverse categories. Choose the focus category, select the desired quantity, discover highly projected keywords, and run the sequential article generator.
+                  </p>
+
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500 mb-1.5">Focus Category</label>
+                        <select
+                          value={bulkCategory}
+                          onChange={(e) => setBulkCategory(e.target.value)}
+                          className="w-full rounded-xl border border-[rgba(99,102,241,0.15)] bg-gray-900 border-0 px-4 py-3 text-xs text-white focus:outline-none cursor-pointer"
+                          disabled={bulkDiscovering || bulkGenerating}
+                        >
+                          <option value="all">Auto-Detect Global Trends (All Categories)</option>
+                          <option value="Technology">Technology Focus</option>
+                          <option value="Health">Health Focus</option>
+                          <option value="Finance">Finance Focus</option>
+                          <option value="Travel">Travel Focus</option>
+                          <option value="Lifestyle">Lifestyle Focus</option>
+                          <option value="Development">Development Focus</option>
+                          <option value="SEO">SEO Focus</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase text-gray-500 mb-1.5">
+                          <span>Article Suggestions Quantity</span>
+                          <span className="text-indigo-400 font-mono font-bold">{bulkCount} Posts</span>
+                        </div>
+                        <div className="px-1 py-1">
+                          <input
+                            type="range"
+                            min="2"
+                            max="10"
+                            step="1"
+                            value={bulkCount}
+                            onChange={(e) => setBulkCount(Number(e.target.value))}
+                            className="w-full h-1.5 rounded-lg bg-gray-800 accent-indigo-500 cursor-pointer"
+                            disabled={bulkDiscovering || bulkGenerating}
+                          />
+                          <div className="flex justify-between text-[9px] text-gray-600 mt-1 font-semibold">
+                            <span>2</span>
+                            <span>4</span>
+                            <span>6</span>
+                            <span>8</span>
+                            <span>10</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 py-1 border-t border-[rgba(255,255,255,0.03)] pt-3">
+                      <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={aiSearchWeb}
+                          onChange={(e) => setAiSearchWeb(e.target.checked)}
+                          className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                          disabled={bulkGenerating}
+                        />
+                        <span>Research fact checks before generating</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={aiPublished}
+                          onChange={(e) => setAiPublished(e.target.checked)}
+                          className="rounded border-[rgba(99,102,241,0.15)] bg-indigo-950/30 text-indigo-600 focus:ring-0 cursor-pointer h-4 w-4"
+                          disabled={bulkGenerating}
+                        />
+                        <span>Publish generated posts directly</span>
+                      </label>
+                    </div>
+
+                    {/* Discovered Trends Preview Table */}
+                    {bulkTopics.length > 0 && (
+                      <div className="mt-6 border-t border-[rgba(255,255,255,0.05)] pt-4 text-left">
+                        <h4 className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest mb-3">
+                          Discovered Trending Topics Queue
+                        </h4>
+                        <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                          {bulkTopics.map((t, idx) => (
+                            <div key={idx} className="p-3 rounded-xl bg-gray-950/40 border border-[rgba(255,255,255,0.02)] hover:border-[rgba(255,255,255,0.05)] transition-all flex items-start justify-between gap-3 text-xs">
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={!!t.selected}
+                                  onChange={(e) => {
+                                    const updated = [...bulkTopics];
+                                    updated[idx].selected = e.target.checked;
+                                    setBulkTopics(updated);
+                                  }}
+                                  className="mt-1.5 rounded border-gray-700 bg-gray-900 text-indigo-600 focus:ring-0 cursor-pointer h-4.5 w-4.5"
+                                  disabled={bulkGenerating}
+                                />
+                                <div className="text-left">
+                                  <div className="font-bold text-white leading-snug">{t.topic}</div>
+                                  <p className="text-[10px] text-gray-400 mt-1 leading-normal">{t.reason}</p>
+                                  <span className="text-[9px] font-semibold text-gray-500 mt-1 uppercase block tracking-wider">{t.category} • Vol: {t.volume}</span>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="text-[10px] font-mono font-bold text-emerald-400 block">${t.expectedCpc.toFixed(2)} CPC</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {aiError && (
+                      <p className="text-xs text-red-400 font-semibold">{aiError}</p>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-3">
+                      <button
+                        type="button"
+                        onClick={handleDiscoverTrends}
+                        disabled={bulkDiscovering || bulkGenerating}
+                        className="flex-1 flex items-center justify-center space-x-1.5 rounded-xl border border-indigo-500/30 hover:border-indigo-500 bg-indigo-950/10 hover:bg-indigo-950/20 py-3 text-xs font-semibold tracking-wider text-indigo-300 uppercase transition-all duration-300 disabled:opacity-50"
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span>{bulkDiscovering ? 'Analyzing Trends...' : '1. Discover Trending Topics'}</span>
+                      </button>
+
+                      {bulkTopics.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleBulkGenerate}
+                          disabled={bulkDiscovering || bulkGenerating}
+                          className="flex-1 flex items-center justify-center space-x-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 py-3 text-xs font-semibold tracking-wider text-white uppercase shadow-lg shadow-indigo-600/10 transition-all duration-300 disabled:opacity-50"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          <span>2. Generate & Publish Selected</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Progress Feedback Log / Progress Bar */}
               {aiProgress.length > 0 && (
                 <div className="mt-6 p-4 rounded-xl border border-[rgba(255,255,255,0.05)] bg-indigo-950/10 text-left">
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-2">Generation Progress Log</span>
-                  <div className="space-y-1.5 font-mono text-[10px] text-gray-400 max-h-[150px] overflow-y-auto">
+                  
+                  {/* Progress Bar (Visible in Bulk Generation) */}
+                  {bulkGenerating && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs font-semibold mb-1">
+                        <span className="text-white">Queue status: Post {bulkCurrentIndex} of {bulkTopics.filter(t => t.selected).length}</span>
+                        <span className="text-indigo-400 font-bold">{bulkProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${bulkProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5 font-mono text-[10px] text-gray-400 max-h-[150px] overflow-y-auto pr-1">
                     {aiProgress.map((prog, idx) => (
                       <p key={idx} className="flex items-start gap-1.5">
                         <span className="text-indigo-500 font-bold">»</span>
@@ -1252,10 +1563,11 @@ export default function Dashboard() {
                       </p>
                     ))}
                   </div>
-                  {aiGenerating && (
+                  
+                  {(aiGenerating || bulkDiscovering) && (
                     <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-500">
                       <RefreshCw className="h-3.5 w-3.5 animate-spin text-indigo-400" />
-                      <span>Gemini AI is writing your content...</span>
+                      <span>{bulkDiscovering ? 'Querying global search logs...' : 'AI writer is generating article content...'}</span>
                     </div>
                   )}
                 </div>
