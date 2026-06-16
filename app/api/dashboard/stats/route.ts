@@ -65,8 +65,8 @@ export async function GET() {
 
     // Convert map to sorted array and compute CTR metrics
     const dailyChartData = Object.values(dailyMap)
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map((day) => {
+      .sort((a: any, b: any) => a.date.localeCompare(b.date))
+      .map((day: any) => {
         // Round numbers to avoid decimal issues in UI
         day.revenue = Math.round(day.revenue * 100) / 100;
         day.adsense = Math.round(day.adsense * 100) / 100;
@@ -115,7 +115,7 @@ export async function GET() {
       }
     });
 
-    const networkBreakdown = networkAggregates.map((group) => ({
+    const networkBreakdown = networkAggregates.map((group: any) => ({
       network: group.network,
       revenue: Math.round((group._sum.revenue || 0) * 100) / 100,
       impressions: group._sum.impressions || 0,
@@ -130,7 +130,7 @@ export async function GET() {
       orderBy: { _sum: { views: 'desc' } }
     });
 
-    const categoryStats = categoryGroups.map((g) => ({
+    const categoryStats = categoryGroups.map((g: any) => ({
       category: g.category,
       views: g._sum.views || 0,
       count: g._count.id
