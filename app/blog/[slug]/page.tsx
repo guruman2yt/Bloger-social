@@ -218,7 +218,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
           <div className="mt-16 border-t border-[rgba(255,255,255,0.05)] pt-10">
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-6">Related Articles</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {relatedPosts.map((related) => (
+              {relatedPosts.map((related: any) => (
                 <Link
                   key={related.id}
                   href={`/blog/${related.slug}`}
