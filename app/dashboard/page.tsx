@@ -526,6 +526,11 @@ export default function Dashboard() {
       }
 
       setBulkProgress(Math.round(((i + 1) / selected.length) * 100));
+
+      // Pacing delay of 3.5 seconds to prevent rate-limit spikes on free tier keys
+      if (i < selected.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 3500));
+      }
     }
 
     setAiProgress((prev) => [...prev, `🎉 Bulk post generation completed! Generated ${selected.length} articles.`]);

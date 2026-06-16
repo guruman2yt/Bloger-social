@@ -160,5 +160,9 @@ Requirements for the blog post:
   }
 
   console.error('All generative model attempts failed. Last error:', lastError);
-  throw new Error(`AI generation failed due to service errors. Please try again. details: ${lastError?.message || lastError}`);
+  const errMsg = lastError?.message || String(lastError);
+  if (errMsg.includes('429') || errMsg.includes('Quota') || errMsg.includes('quota')) {
+    throw new Error('Gemini API Quota Exceeded (429 Too Many Requests). You have reached the limit of your Gemini Free Tier API key (which has a limit of 15 requests/min and 20 requests/day on restricted free projects). Please upgrade to a Pay-as-you-go key in Google AI Studio, or wait a few minutes before trying again.');
+  }
+  throw new Error(`AI generation failed due to service errors. Please try again. details: ${errMsg}`);
 }
