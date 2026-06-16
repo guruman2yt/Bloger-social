@@ -1,0 +1,8 @@
+# Google AdSense Publisher Authorization
+google.com, pub-xxxxxxxxxxxxxxxx, DIRECT, f08c47fec0942fa0
+
+# Addstra Partners
+adsterra.com, 108342, DIRECT, 843ab98d89a7f34f
+
+# Monetag Inventory
+monetag.io, 203841, DIRECT, b98c87f34acb204f

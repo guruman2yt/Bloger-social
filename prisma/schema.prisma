@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  summary     String
+  content     String
+  coverImage  String
+  category    String
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  views       Int       @default(0)
+  readTime    Int       @default(3)
+  author      String    @default("Admin")
+  comments    Comment[]
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName String
+  content    String
+  createdAt  DateTime @default(now())
+}
+
+model AdMetric {
+  id          String   @id @default(cuid())
+  date        String   // YYYY-MM-DD
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  revenue     Float    @default(0.0)
+  network     String   // "adsense" | "addstra" | "monetag" | "propeller" | "simulated"
+
+  @@unique([date, network])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
