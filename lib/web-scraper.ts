@@ -105,38 +105,60 @@ export async function scrapeUnsplashImage(keyword: string): Promise<string> {
     'https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=800&auto=format&fit=crop&q=60', // Dev
     'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&auto=format&fit=crop&q=60', // Design
     'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=60', // Monetization
-    'https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=800&auto=format&fit=crop&q=60'  // SEO
+    'https://images.unsplash.com/photo-1562577309-4932fdd64cd1?w=800&auto=format&fit=crop&q=60', // SEO
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=60', // Tech
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=60', // Business
+    'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&auto=format&fit=crop&q=60', // Website
+    'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&auto=format&fit=crop&q=60', // UI Design
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=60', // Teamwork
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=60'  // Office
   ];
-  
-  try {
-    const searchUrl = `https://unsplash.com/s/photos/${encodeURIComponent(keyword)}`;
-    const response = await fetch(searchUrl, { headers: getHeaders() });
-    if (!response.ok) {
-      throw new Error(`Unsplash returned status ${response.status}`);
-    }
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    
-    let imageUrl = '';
-    
-    // Find all images and look for the first one that is a standard stock photo
-    $('img').each((_, img) => {
-      if (imageUrl) return; // Found
-      const src = $(img).attr('src') || '';
-      
-      // Unsplash photos have specific image domain formats
-      if (src.includes('images.unsplash.com/photo-') && !src.includes('profile-') && !src.includes('placeholder')) {
-        // Parse basic URL and clean off excessive query parameters
-        const baseUrl = src.split('?')[0];
-        imageUrl = `${baseUrl}?w=800&auto=format&fit=crop&q=60`;
-      }
-    });
 
-    if (imageUrl) {
-      return imageUrl;
+  // Build sequential query list to guarantee relevant results
+  const queryTerms = [keyword];
+  
+  // If query is a long sentence/title, add a simplified 3-word prefix search
+  const words = keyword.split(/\s+/);
+  if (words.length > 3) {
+    queryTerms.push(words.slice(0, 3).join(' '));
+  }
+  
+  // Add broad fallback categories based on search content
+  const lowerKeyword = keyword.toLowerCase();
+  if (lowerKeyword.includes('health') || lowerKeyword.includes('medicine')) queryTerms.push('health');
+  else if (lowerKeyword.includes('travel') || lowerKeyword.includes('vacation')) queryTerms.push('travel');
+  else if (lowerKeyword.includes('finance') || lowerKeyword.includes('money') || lowerKeyword.includes('business')) queryTerms.push('finance');
+  else if (lowerKeyword.includes('lifestyle') || lowerKeyword.includes('fitness')) queryTerms.push('lifestyle');
+  else if (lowerKeyword.includes('development') || lowerKeyword.includes('code') || lowerKeyword.includes('tech')) queryTerms.push('technology');
+  else queryTerms.push('abstract');
+
+  for (const query of queryTerms) {
+    try {
+      const searchUrl = `https://unsplash.com/s/photos/${encodeURIComponent(query)}`;
+      const response = await fetch(searchUrl, { headers: getHeaders() });
+      if (response.ok) {
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        const imageUrls: string[] = [];
+        
+        $('img').each((_, img) => {
+          const src = $(img).attr('src') || '';
+          if (src.includes('images.unsplash.com/photo-') && !src.includes('profile-') && !src.includes('placeholder')) {
+            const baseUrl = src.split('?')[0];
+            imageUrls.push(`${baseUrl}?w=800&auto=format&fit=crop&q=60`);
+          }
+        });
+        
+        if (imageUrls.length > 0) {
+          // Select a random image from the top 10 results to ensure variety
+          const limit = Math.min(10, imageUrls.length);
+          const randomIndex = Math.floor(Math.random() * limit);
+          return imageUrls[randomIndex];
+        }
+      }
+    } catch (error) {
+      console.error(`Unsplash image scraping error for query "${query}":`, error);
     }
-  } catch (error) {
-    console.error(`Unsplash image scraping error for keyword "${keyword}":`, error);
   }
 
   // Fallback to random default image
