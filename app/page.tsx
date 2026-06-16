@@ -39,7 +39,7 @@ export default async function Home() {
     addstraScriptUrl: '',
     monetagScriptUrl: ''
   };
-  dbSettings.forEach(s => {
+  dbSettings.forEach((s: any) => {
     if (s.key === 'adDensity') settings.adDensity = s.value as any;
     if (s.key === 'activeNetwork') settings.activeNetwork = s.value as any;
     if (s.key === 'adsEnabled') settings.adsEnabled = s.value === 'true';

@@ -15,7 +15,7 @@ export async function GET() {
     const dbSettings = await prisma.setting.findMany();
     const settingsObj: Record<string, string> = { ...DEFAULT_SETTINGS };
     
-    dbSettings.forEach((s) => {
+    dbSettings.forEach((s: any) => {
       settingsObj[s.key] = s.value;
     });
 
