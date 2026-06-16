@@ -95,13 +95,13 @@ export async function POST(request: NextRequest) {
         const prompt = `
         You are a global trend analyzer and search engine optimization (SEO) specialist.
         Identify exactly ${targetCount} highly trending, high-traffic topics that are popular in the world right now.
-        ${category !== 'all' ? `All topics MUST belong to the category: "${category}".` : `Mix and match topics across diverse categories such as "Technology", "Health", "Finance", "Travel", "Lifestyle", "Development", "Design", "Monetization", "SEO".`}
+        ${category !== 'all' ? `All topics MUST belong to the category: "${category}".` : `Mix and match topics across diverse global interest areas (e.g. Technology, Health, Finance, Travel, Lifestyle, Science, Entertainment, Sports, Space, Gaming, Business, Development, RelationShips, etc. depending on what is viral in the world right now). Do not restrict yourself to any pre-defined category list, discover whatever is highly viral globally.`}
         
         The topics must be popular search terms designed to get maximum organic traffic and have high commercial CPC (Cost Per Click) potential.
         
         Output them as a JSON list of objects containing:
         - topic: Catchy, publication-ready article title.
-        - category: The category it belongs to (e.g. Technology, Health, Finance, Travel, Lifestyle, Development, etc.).
+        - category: The category it belongs to (e.g. Technology, Health, Finance, Travel, Lifestyle, Science, Entertainment, Sports, Space, Gaming, Business, Development, SEO, etc. - capitalize it, single word or short phrase).
         - expectedCpc: Projected Google Search CPC value in USD (a decimal number, e.g. between 2.50 and 15.00).
         - volume: High, Very High, or Medium-High.
         - reason: A short 1-sentence explanation of why this topic is currently viral or trending.
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
-        
+
         let cleanJsonText = responseText.trim();
         if (cleanJsonText.startsWith('```')) {
           cleanJsonText = cleanJsonText
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
             .replace(/```$/i, '')
             .trim();
         }
-        
+
         const suggestedTopics = JSON.parse(cleanJsonText) as SuggestedTopic[];
         return NextResponse.json({ success: true, topics: suggestedTopics.slice(0, targetCount) });
       } catch (err: any) {
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         pool = OFFLINE_TRENDS_POOL; // Fallback to entire pool if category has no offline matches
       }
     }
-    
+
     // Shuffle the pool and return the requested count
     const shuffled = [...pool].sort(() => 0.5 - Math.random());
     return NextResponse.json({ success: true, topics: shuffled.slice(0, targetCount) });

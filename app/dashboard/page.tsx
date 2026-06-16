@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Lock, ArrowRight, BarChart3, ListCollapse, PlusCircle, 
-  DollarSign, Eye, MousePointer, Percent, Newspaper, MessageSquare, 
+import {
+  Lock, ArrowRight, BarChart3, ListCollapse, PlusCircle,
+  DollarSign, Eye, MousePointer, Percent, Newspaper, MessageSquare,
   Trash2, Edit, Save, X, Globe, FileEdit, RefreshCw, Sparkles, Cpu, Settings
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -43,7 +43,7 @@ export default function Dashboard() {
 
   // Dashboard active view state
   const [activeTab, setActiveTab] = useState<'analytics' | 'posts' | 'editor' | 'ai-automation' | 'ad-settings'>('analytics');
-  
+
   // Data loading states
   const [posts, setPosts] = useState<Post[]>([]);
   const [stats, setStats] = useState({
@@ -167,7 +167,7 @@ export default function Dashboard() {
     setSettingsLoading(true);
     setSettingsError('');
     setSettingsSuccess(false);
-    
+
     try {
       const response = await fetch('/api/dashboard/settings', {
         method: 'POST',
@@ -294,11 +294,11 @@ export default function Dashboard() {
           spread: 40,
           origin: { y: 0.8 }
         });
-        
+
         // Reset Editor
         resetEditorForm();
         fetchData();
-        
+
         // Switch to posts list
         setTimeout(() => {
           setActiveTab('posts');
@@ -417,7 +417,7 @@ export default function Dashboard() {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         setAiProgress((prev) => [...prev, `✅ Post "${data.post.title}" generated and saved successfully!`]);
         setAiSuccess(true);
@@ -427,10 +427,10 @@ export default function Dashboard() {
           spread: 50,
           origin: { y: 0.8 }
         });
-        
+
         // Refresh dashboard statistics and posts
         fetchData();
-        
+
         // Transition back to posts list after delay
         setTimeout(() => {
           setActiveTab('posts');
@@ -511,7 +511,7 @@ export default function Dashboard() {
         const data = await response.json();
         if (response.ok && data.success) {
           setAiProgress((prev) => [...prev, `✅ [Post ${i + 1}/${selected.length}] Completed: "${data.post.title}"`]);
-          
+
           // Confetti particle burst for each successful generation
           confetti({
             particleCount: 25,
@@ -565,7 +565,7 @@ export default function Dashboard() {
 
       if (response.ok && data.success) {
         setAiProgress((prev) => [
-          ...prev, 
+          ...prev,
           `Mode: ${data.mode}`,
           `Source Link: ${data.source}`,
           `✅ Generated post: "${data.post.title}" successfully!`
@@ -600,7 +600,7 @@ export default function Dashboard() {
     // Get max value of selected metric to dynamically scale graph height
     const vals = chartData.map((d) => d[chartMetric]);
     const maxVal = Math.max(...vals, 1);
-    
+
     const chartHeight = 200;
     const chartWidth = 700;
     const padding = 20;
@@ -700,7 +700,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-[#05030a]">
         <div className="w-full max-w-md rounded-3xl border border-[rgba(99,102,241,0.15)] bg-[rgba(17,12,28,0.4)] backdrop-blur-md p-8 shadow-2xl relative overflow-hidden">
-          
+
           <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-indigo-600/10 blur-2xl" />
           <div className="absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-purple-600/10 blur-2xl" />
 
@@ -745,7 +745,7 @@ export default function Dashboard() {
   // 2. Render Logged-in Dashboard UI
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 bg-[#05030a]">
-      
+
       {/* Dashboard Top Header bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-6 mb-8 gap-4">
         <div>
@@ -755,7 +755,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-xs text-gray-400 mt-1">Configure articles, monitor RPM, and view dynamic CPM/CPC yields.</p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <button
             onClick={fetchData}
@@ -775,7 +775,7 @@ export default function Dashboard() {
 
       {/* Aggregate Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
-        
+
         {/* Earnings */}
         <div className="col-span-2 p-5 rounded-2xl border border-[rgba(99,102,241,0.15)] bg-gradient-to-tr from-indigo-950/20 to-transparent shadow-lg text-left">
           <div className="flex items-center justify-between">
@@ -842,11 +842,10 @@ export default function Dashboard() {
       <div className="flex border-b border-[rgba(255,255,255,0.05)] mb-8 gap-2">
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === 'analytics'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === 'analytics'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           <BarChart3 className="h-4 w-4" />
           <span>Analytics Graphs</span>
@@ -854,11 +853,10 @@ export default function Dashboard() {
 
         <button
           onClick={() => setActiveTab('posts')}
-          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === 'posts'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === 'posts'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           <ListCollapse className="h-4 w-4" />
           <span>Post Manager ({posts.length})</span>
@@ -869,11 +867,10 @@ export default function Dashboard() {
             resetEditorForm();
             setActiveTab('editor');
           }}
-          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === 'editor' && !editingPostId
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === 'editor' && !editingPostId
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           <PlusCircle className="h-4 w-4" />
           <span>New Article</span>
@@ -881,11 +878,10 @@ export default function Dashboard() {
 
         <button
           onClick={() => setActiveTab('ai-automation')}
-          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === 'ai-automation'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === 'ai-automation'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           <Sparkles className="h-4 w-4" />
           <span>AI Automation</span>
@@ -893,11 +889,10 @@ export default function Dashboard() {
 
         <button
           onClick={() => setActiveTab('ad-settings')}
-          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${
-            activeTab === 'ad-settings'
-              ? 'border-indigo-500 text-white'
-              : 'border-transparent text-gray-400 hover:text-white'
-          }`}
+          className={`flex items-center space-x-1.5 px-4 py-3 border-b-2 text-xs font-semibold uppercase tracking-wider transition-all ${activeTab === 'ad-settings'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-gray-400 hover:text-white'
+            }`}
         >
           <Settings className="h-4 w-4" />
           <span>Ad Settings</span>
@@ -910,21 +905,20 @@ export default function Dashboard() {
       {activeTab === 'analytics' && (
         <div className="space-y-6">
           <div className="rounded-3xl border border-[rgba(255,255,255,0.05)] bg-[rgba(17,12,28,0.2)] p-6">
-            
+
             {/* Metric Selector Tabs */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-[rgba(255,255,255,0.05)] pb-4">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">Historical performance (Last 14 Days)</h3>
-              
+
               <div className="flex flex-wrap gap-1">
                 {(['revenue', 'impressions', 'clicks', 'ctr'] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setChartMetric(m)}
-                    className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                      chartMetric === m
-                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
-                        : 'bg-indigo-950/10 border-[rgba(255,255,255,0.05)] text-gray-400 hover:text-white'
-                    }`}
+                    className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${chartMetric === m
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/20'
+                      : 'bg-indigo-950/10 border-[rgba(255,255,255,0.05)] text-gray-400 hover:text-white'
+                      }`}
                   >
                     {m}
                   </button>
@@ -937,7 +931,7 @@ export default function Dashboard() {
               {renderSvgChart()}
             </div>
           </div>
-          
+
           {/* Relocated Monetization & Ads Analytics Hub */}
           <MonetizationSection realStats={stats.ads} />
 
@@ -993,7 +987,7 @@ export default function Dashboard() {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-[10px] font-mono font-bold text-emerald-400 block">${r.expectedCpc.toFixed(2)} CPC</span>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => {
                             setEditorTitle(r.topic);
@@ -1033,7 +1027,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          
+
           {/* Informational Panel */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-6 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.01)] text-left">
@@ -1045,7 +1039,7 @@ export default function Dashboard() {
                 <div className="flex justify-between py-1.5 border-b border-[rgba(255,255,255,0.03)]"><span className="text-pink-300 font-semibold">Addstra Partners</span><span>$2.20 CPM / $0.15 CPC</span></div>
               </div>
             </div>
-            
+
             <div className="p-6 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.01)] text-left flex flex-col justify-between">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Monetization Checklist</h4>
@@ -1091,11 +1085,10 @@ export default function Dashboard() {
                     <td className="py-4 px-6">
                       <button
                         onClick={() => togglePublishStatus(post)}
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border transition-all ${
-                          post.published
-                            ? 'bg-emerald-950/20 text-emerald-400 border-emerald-500/20 hover:border-emerald-500/50'
-                            : 'bg-yellow-950/20 text-yellow-500 border-yellow-500/10 hover:border-yellow-500/40'
-                        }`}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border transition-all ${post.published
+                          ? 'bg-emerald-950/20 text-emerald-400 border-emerald-500/20 hover:border-emerald-500/50'
+                          : 'bg-yellow-950/20 text-yellow-500 border-yellow-500/10 hover:border-yellow-500/40'
+                          }`}
                       >
                         {post.published ? 'Published' : 'Draft'}
                       </button>
@@ -1131,13 +1124,13 @@ export default function Dashboard() {
       {/* Panel 3: Write / Edit Post Editor */}
       {activeTab === 'editor' && (
         <div className="rounded-3xl border border-[rgba(255,255,255,0.05)] bg-[rgba(17,12,28,0.2)] p-6 text-left">
-          
+
           <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-4 mb-6">
             <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <FileEdit className="h-4.5 w-4.5 text-indigo-400" />
               <span>{editingPostId ? 'Edit Article' : 'Write New Article'}</span>
             </h3>
-            
+
             <button
               onClick={() => {
                 resetEditorForm();
@@ -1287,16 +1280,16 @@ export default function Dashboard() {
       {activeTab === 'ai-automation' && (
         <div className="space-y-6 text-left">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {/* Topic Generator Form */}
             <div className="lg:col-span-2 rounded-3xl border border-[rgba(99,102,241,0.15)] bg-[rgba(17,12,28,0.3)] p-6 backdrop-blur-md relative overflow-hidden">
               <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full bg-indigo-600/5 blur-2xl" />
-              
+
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-1.5 mb-4">
                 <Sparkles className="h-5 w-5 text-indigo-400" />
                 <span>AI Automated Post Creator</span>
               </h3>
-              
+
               {/* Mode Selection Tabs */}
               <div className="flex bg-gray-950/80 p-1 rounded-xl border border-gray-800/50 mb-6 max-w-xs">
                 <button
@@ -1306,11 +1299,10 @@ export default function Dashboard() {
                     setAiError('');
                     setAiProgress([]);
                   }}
-                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
-                    aiMode === 'single'
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${aiMode === 'single'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                   disabled={aiGenerating || bulkDiscovering}
                 >
                   Single Post
@@ -1322,11 +1314,10 @@ export default function Dashboard() {
                     setAiError('');
                     setAiProgress([]);
                   }}
-                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
-                    aiMode === 'bulk'
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${aiMode === 'bulk'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-gray-400 hover:text-white'
+                    }`}
                   disabled={aiGenerating || bulkDiscovering}
                 >
                   Bulk Creator
@@ -1415,6 +1406,12 @@ export default function Dashboard() {
                           <option value="Lifestyle">Lifestyle Focus</option>
                           <option value="Development">Development Focus</option>
                           <option value="SEO">SEO Focus</option>
+                          <option value="Science">Science Focus</option>
+                          <option value="Space">Space Focus</option>
+                          <option value="Sports">Sports Focus</option>
+                          <option value="Gaming">Gaming Focus</option>
+                          <option value="Business">Business Focus</option>
+                          <option value="RelationShips">RelationShips Focus</option>
                         </select>
                       </div>
 
@@ -1541,7 +1538,7 @@ export default function Dashboard() {
               {aiProgress.length > 0 && (
                 <div className="mt-6 p-4 rounded-xl border border-[rgba(255,255,255,0.05)] bg-indigo-950/10 text-left">
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-2">Generation Progress Log</span>
-                  
+
                   {/* Progress Bar (Visible in Bulk Generation) */}
                   {bulkGenerating && (
                     <div className="mb-4">
@@ -1563,7 +1560,7 @@ export default function Dashboard() {
                       </p>
                     ))}
                   </div>
-                  
+
                   {(aiGenerating || bulkDiscovering) && (
                     <div className="mt-3 flex items-center gap-2 text-[10px] text-gray-500">
                       <RefreshCw className="h-3.5 w-3.5 animate-spin text-indigo-400" />
@@ -1626,7 +1623,7 @@ export default function Dashboard() {
           </p>
 
           <form onSubmit={handleSaveSettings} className="space-y-6">
-            
+
             {/* Toggle Switch: Global Ads Enable */}
             <div className="flex items-center justify-between p-4 rounded-2xl border border-[rgba(255,255,255,0.03)] bg-indigo-950/10">
               <div>
@@ -1658,7 +1655,7 @@ export default function Dashboard() {
             {/* Text inputs for credentials with Connection Badges */}
             <div className="space-y-4 p-4 rounded-2xl border border-[rgba(255,255,255,0.03)] bg-indigo-950/5">
               <h4 className="text-xs font-bold text-white mb-2">Publisher Credentials</h4>
-              
+
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-400">Google AdSense Client ID</label>
@@ -1718,16 +1715,15 @@ export default function Dashboard() {
             <div>
               <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500 mb-2.5">Global Article Ad Density</label>
               <div className="grid grid-cols-1 gap-3">
-                
+
                 {/* Low Density Option */}
                 <button
                   type="button"
                   onClick={() => setAdDensity('low')}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${
-                    adDensity === 'low'
-                      ? 'bg-indigo-600/10 border-indigo-500 text-white shadow shadow-indigo-500/10'
-                      : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${adDensity === 'low'
+                    ? 'bg-indigo-600/10 border-indigo-500 text-white shadow shadow-indigo-500/10'
+                    : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
+                    }`}
                 >
                   <div className="flex items-center space-x-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1743,11 +1739,10 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setAdDensity('balanced')}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${
-                    adDensity === 'balanced'
-                      ? 'bg-indigo-600/10 border-indigo-500 text-white shadow shadow-indigo-500/10'
-                      : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${adDensity === 'balanced'
+                    ? 'bg-indigo-600/10 border-indigo-500 text-white shadow shadow-indigo-500/10'
+                    : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
+                    }`}
                 >
                   <div className="flex items-center space-x-2">
                     <span className="h-2 w-2 rounded-full bg-indigo-500" />
@@ -1763,11 +1758,10 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setAdDensity('max-revenue')}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${
-                    adDensity === 'max-revenue'
-                      ? 'bg-gradient-to-r from-indigo-950/40 via-purple-950/40 to-pink-950/40 border-pink-500/40 text-white shadow-lg shadow-pink-500/5'
-                      : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 ${adDensity === 'max-revenue'
+                    ? 'bg-gradient-to-r from-indigo-950/40 via-purple-950/40 to-pink-950/40 border-pink-500/40 text-white shadow-lg shadow-pink-500/5'
+                    : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-700 hover:text-white'
+                    }`}
                 >
                   <div className="flex items-center space-x-2">
                     <span className="h-2 w-2 rounded-full bg-pink-500 animate-ping" />

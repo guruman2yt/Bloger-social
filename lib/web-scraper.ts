@@ -100,7 +100,7 @@ export async function scrapeUrl(url: string): Promise<string> {
   }
 }
 
-export async function scrapeUnsplashImage(keyword: string): Promise<string> {
+export async function scrapeUnsplashImage(keyword: string, excludeUrls: string[] = []): Promise<string> {
   const defaultImages = [
     'https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=800&auto=format&fit=crop&q=60', // Dev
     'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&auto=format&fit=crop&q=60', // Design
@@ -113,6 +113,10 @@ export async function scrapeUnsplashImage(keyword: string): Promise<string> {
     'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&auto=format&fit=crop&q=60', // Teamwork
     'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=60'  // Office
   ];
+
+  // Helper to extract base image ID or URL prefix to avoid duplicates
+  const getBaseUrl = (url: string) => url.split('?')[0].trim();
+  const excludedBases = excludeUrls.map(getBaseUrl);
 
   // Build sequential query list to guarantee relevant results
   const queryTerms = [keyword];
@@ -149,11 +153,14 @@ export async function scrapeUnsplashImage(keyword: string): Promise<string> {
           }
         });
         
-        if (imageUrls.length > 0) {
-          // Select a random image from the top 10 results to ensure variety
-          const limit = Math.min(10, imageUrls.length);
+        // Filter out any image that matches one of the excluded base URLs
+        const uniqueImageUrls = imageUrls.filter(url => !excludedBases.includes(getBaseUrl(url)));
+        
+        if (uniqueImageUrls.length > 0) {
+          // Select a random image from the top results to ensure variety
+          const limit = Math.min(15, uniqueImageUrls.length);
           const randomIndex = Math.floor(Math.random() * limit);
-          return imageUrls[randomIndex];
+          return uniqueImageUrls[randomIndex];
         }
       }
     } catch (error) {
@@ -161,6 +168,8 @@ export async function scrapeUnsplashImage(keyword: string): Promise<string> {
     }
   }
 
-  // Fallback to random default image
-  return defaultImages[Math.floor(Math.random() * defaultImages.length)];
+  // Fallback to random default image that hasn't been used yet if possible
+  const unusedDefaultImages = defaultImages.filter(url => !excludedBases.includes(getBaseUrl(url)));
+  const finalPool = unusedDefaultImages.length > 0 ? unusedDefaultImages : defaultImages;
+  return finalPool[Math.floor(Math.random() * finalPool.length)];
 }

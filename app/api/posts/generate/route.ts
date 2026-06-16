@@ -43,9 +43,21 @@ export async function POST(request: NextRequest) {
     console.log(`Generating AI content for topic: "${topic}"`);
     const postData = await generateAIBlogPost(topic, webData);
 
-    // 3. Scrape a matching premium cover image from Unsplash
-    console.log(`Scraping cover photo for category/topic: "${postData.category || topic}"`);
-    const coverImage = await scrapeUnsplashImage(postData.category || topic);
+    // 3. Scrape a matching premium cover image from Unsplash (excluding existing images to prevent duplication)
+    console.log(`Fetching existing cover images from DB to prevent duplication...`);
+    let excludeUrls: string[] = [];
+    try {
+      const existingImages = await prisma.post.findMany({
+        select: { coverImage: true }
+      });
+      excludeUrls = existingImages.map(p => p.coverImage).filter(Boolean);
+    } catch (dbErr) {
+      console.warn('Failed to retrieve existing cover images for deduplication:', dbErr);
+    }
+
+    const searchKeyword = postData.coverImageQuery || postData.title || topic;
+    console.log(`Scraping unique cover photo for keyword: "${searchKeyword}"`);
+    const coverImage = await scrapeUnsplashImage(searchKeyword, excludeUrls);
 
     // 4. Generate a unique SEO slug
     let slug = postData.title

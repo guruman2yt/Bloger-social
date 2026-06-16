@@ -7,6 +7,7 @@ export interface GeneratedPost {
   content: string;
   readTime: number;
   author: string;
+  coverImageQuery?: string;
 }
 
 const OFFLINE_AUTHORS = [
@@ -96,10 +97,11 @@ ${webData || 'No search results available. Write based on your knowledge base.'}
 Requirements for the blog post:
 1. **Title**: Catchy, SEO-optimized heading.
 2. **Summary**: A concise 1-2 sentence SEO meta description.
-3. **Category**: Choose the best matching category from: "Development", "Design", "Monetization", "SEO", "Technology", "General".
+3. **Category**: Assign the best matching category for this topic (e.g. Technology, Health, Finance, Travel, Lifestyle, Science, Entertainment, Sports, Space, Gaming, Business, Development, SEO, etc.). The category must be a capitalized, single word or short phrase, and highly relevant to the post content.
 4. **Content**: A detailed, in-depth, and well-structured article (minimum 800-1000 words). Use markdown/HTML formatting for subheadings (e.g. ###, ##), bullet points, and clean syntax highlighted code blocks (using \`\`\`language) to make it look premium and easy to read. Include explanations, examples, and best practices.
 5. **Read Time**: Calculate the approximate reading time in minutes (based on 200 words per minute).
-6. **Author**: Generate a realistic, professional tech writer/editor name (e.g. 'Sarah Jenkins', 'Alex Mercer', 'Devon Carter') that suits the article's category and tone.
+6. **Author**: Generate a realistic, professional writer/editor name (e.g. 'Sarah Jenkins', 'Alex Mercer', 'Devon Carter') that suits the article's category and tone.
+7. **Cover Image Query**: Generate a highly specific 2-3 word keyword search query/phrase (in English) suitable for fetching a high-quality, relevant cover photo on Unsplash (e.g. "autonomous vehicle", "telehealth nurse", "wallet keys", "green forest trail"). Do not output generic categories, but rather concrete search terms related to the core topic.
 `;
 
   const modelsToTry = ['gemini-2.5-flash'];
@@ -125,8 +127,9 @@ Requirements for the blog post:
                 content: { type: SchemaType.STRING },
                 readTime: { type: SchemaType.INTEGER },
                 author: { type: SchemaType.STRING },
+                coverImageQuery: { type: SchemaType.STRING },
               },
-              required: ['title', 'summary', 'category', 'content', 'readTime', 'author'],
+              required: ['title', 'summary', 'category', 'content', 'readTime', 'author', 'coverImageQuery'],
             },
           }
         });
