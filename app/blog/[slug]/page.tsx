@@ -83,12 +83,12 @@ export default async function BlogPost({ params }: BlogPostProps) {
   // Fetch global settings from database
   const dbSettings = await prisma.setting.findMany();
   const settings = {
-    adDensity: 'balanced' as 'low' | 'balanced' | 'max-revenue',
-    activeNetwork: 'adsense' as 'adsense' | 'addstra' | 'monetag',
-    adsEnabled: true,
-    adsenseClientId: '',
-    addstraScriptUrl: '',
-    monetagScriptUrl: ''
+    adDensity: (process.env.NEXT_PUBLIC_AD_DENSITY || 'balanced') as 'low' | 'balanced' | 'max-revenue',
+    activeNetwork: (process.env.NEXT_PUBLIC_ACTIVE_AD_NETWORK || 'addstra') as 'adsense' | 'addstra' | 'monetag',
+    adsEnabled: process.env.NEXT_PUBLIC_ADS_ENABLED !== 'false',
+    adsenseClientId: process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || '',
+    addstraScriptUrl: process.env.NEXT_PUBLIC_ADDSTRA_SCRIPT_URL || '',
+    monetagScriptUrl: process.env.NEXT_PUBLIC_MONETAG_SCRIPT_URL || ''
   };
   dbSettings.forEach((s: Setting) => {
     if (s.key === 'adDensity') settings.adDensity = s.value as 'low' | 'balanced' | 'max-revenue';
