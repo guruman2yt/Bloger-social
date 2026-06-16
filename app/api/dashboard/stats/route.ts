@@ -35,7 +35,7 @@ export async function GET() {
       ctr: number;
     }> = {};
 
-    metrics.forEach((m) => {
+    metrics.forEach((m: any) => {
       const dateStr = m.date;
       if (!dailyMap[dateStr]) {
         dailyMap[dateStr] = {
@@ -140,7 +140,7 @@ export async function GET() {
     const allPosts = await prisma.post.findMany({
       select: { title: true }
     });
-    const existingTitles = allPosts.map(p => p.title.toLowerCase());
+    const existingTitles = allPosts.map((p: any) => p.title.toLowerCase());
 
     const RECOMMENDATIONS_POOL = [
       { topic: "Next.js Server Actions and Form Validation Best Practices", category: "Development", expectedCpc: 8.50, volume: "High" },
@@ -203,12 +203,12 @@ export async function GET() {
       } catch (err) {
         console.error('Failed to generate dynamic recommendations using Gemini:', err);
         contentRecommendations = RECOMMENDATIONS_POOL.filter(
-          rec => !existingTitles.some(title => title.includes(rec.topic.toLowerCase()) || rec.topic.toLowerCase().includes(title))
+          (rec: any) => !existingTitles.some((title: any) => title.includes(rec.topic.toLowerCase()) || rec.topic.toLowerCase().includes(title))
         ).slice(0, 3);
       }
     } else {
       contentRecommendations = RECOMMENDATIONS_POOL.filter(
-        rec => !existingTitles.some(title => title.includes(rec.topic.toLowerCase()) || rec.topic.toLowerCase().includes(title))
+        (rec: any) => !existingTitles.some((title: any) => title.includes(rec.topic.toLowerCase()) || rec.topic.toLowerCase().includes(title))
       ).slice(0, 3);
     }
 
