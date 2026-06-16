@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { Post, Setting } from '@prisma/client';
 import BlogListing from '@/components/BlogListing';
 import AdUnit from '@/components/AdUnit';
 import { ArrowDown } from 'lucide-react';
@@ -9,13 +10,18 @@ export const revalidate = 60; // Incremental Static Regeneration (ISR) every 60 
 
 export default async function Home() {
   // 1. Fetch published posts sorted by date
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  let posts: Post[] = [];
+  try {
+    posts = await prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  } catch (error) {
+    console.error('Failed to fetch posts from database:', error);
+  }
 
   // 2. Extract distinct categories dynamically from active database posts
-  const categories = ['All', ...Array.from(new Set(posts.map((p) => p.category)))];
+  const categories = ['All', ...Array.from(new Set(posts.map((p: Post) => p.category)))];
 
   // Find the featured (first/latest) post
   const featuredPost = posts[0];
@@ -30,7 +36,13 @@ export default async function Home() {
   };
 
   // Fetch global settings from database
-  const dbSettings = await prisma.setting.findMany();
+  let dbSettings: Setting[] = [];
+  try {
+    dbSettings = await prisma.setting.findMany();
+  } catch (error) {
+    console.error('Failed to fetch settings from database:', error);
+  }
+  
   const settings = {
     adDensity: 'balanced' as 'low' | 'balanced' | 'max-revenue',
     activeNetwork: 'adsense' as 'adsense' | 'addstra' | 'monetag',
@@ -39,9 +51,9 @@ export default async function Home() {
     addstraScriptUrl: '',
     monetagScriptUrl: ''
   };
-  dbSettings.forEach((s: any) => {
-    if (s.key === 'adDensity') settings.adDensity = s.value as any;
-    if (s.key === 'activeNetwork') settings.activeNetwork = s.value as any;
+  dbSettings.forEach((s: Setting) => {
+    if (s.key === 'adDensity') settings.adDensity = s.value as 'low' | 'balanced' | 'max-revenue';
+    if (s.key === 'activeNetwork') settings.activeNetwork = s.value as 'adsense' | 'addstra' | 'monetag';
     if (s.key === 'adsEnabled') settings.adsEnabled = s.value === 'true';
     if (s.key === 'adsenseClientId') settings.adsenseClientId = s.value;
     if (s.key === 'addstraScriptUrl') settings.addstraScriptUrl = s.value;

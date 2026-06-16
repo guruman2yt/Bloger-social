@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { Setting } from '@prisma/client';
 import CommentsSection from '@/components/CommentsSection';
 import ArticleContent from '@/components/ArticleContent';
 import { Calendar, Clock, Eye, ChevronLeft, ArrowRight, User } from 'lucide-react';
@@ -89,9 +90,9 @@ export default async function BlogPost({ params }: BlogPostProps) {
     addstraScriptUrl: '',
     monetagScriptUrl: ''
   };
-  dbSettings.forEach((s: any) => {
-    if (s.key === 'adDensity') settings.adDensity = s.value as any;
-    if (s.key === 'activeNetwork') settings.activeNetwork = s.value as any;
+  dbSettings.forEach((s: Setting) => {
+    if (s.key === 'adDensity') settings.adDensity = s.value as 'low' | 'balanced' | 'max-revenue';
+    if (s.key === 'activeNetwork') settings.activeNetwork = s.value as 'adsense' | 'addstra' | 'monetag';
     if (s.key === 'adsEnabled') settings.adsEnabled = s.value === 'true';
     if (s.key === 'adsenseClientId') settings.adsenseClientId = s.value;
     if (s.key === 'addstraScriptUrl') settings.addstraScriptUrl = s.value;
