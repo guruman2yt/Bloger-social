@@ -78,6 +78,9 @@ export async function scrapeUrl(url: string): Promise<string> {
     // Remove scripts, styles, navs, footer to clean up text content
     $('script, style, nav, footer, iframe, header, noscript, svg, aside').remove();
 
+    // Insert newlines after block-level tags to avoid word concatenation (e.g. "SuccessThe digital")
+    $('p, h1, h2, h3, h4, h5, h6, li, div, tr, section, article').after('\n');
+
     // Prefer main article content if it exists
     let bodyText = '';
     const mainEl = $('article, main, #content, .content');
@@ -87,11 +90,12 @@ export async function scrapeUrl(url: string): Promise<string> {
       bodyText = $('body').text();
     }
 
-    // Clean up excessive whitespace
+    // Clean up excessive whitespace while preserving newlines/paragraphs
     const cleanText = bodyText
-      .replace(/\s+/g, ' ')
-      .replace(/\n+/g, '\n')
-      .trim();
+      .split('\n')
+      .map(line => line.replace(/\s+/g, ' ').trim())
+      .filter(line => line.length > 0)
+      .join('\n');
 
     return cleanText.substring(0, 5000); // Truncate to avoid context limit issues
   } catch (error) {

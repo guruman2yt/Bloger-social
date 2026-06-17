@@ -5,6 +5,7 @@ import AdUnit from './AdUnit';
 import { Copy, Check, ChevronRight, Coins, X } from 'lucide-react';
 
 interface ArticleContentProps {
+  postId: string;
   content: string;
   adDensity: 'low' | 'balanced' | 'max-revenue';
   activeNetwork: 'adsense' | 'addstra' | 'monetag';
@@ -21,7 +22,76 @@ interface Block {
   id?: string;
 }
 
+// Helper function to parse inline markdown tags (bold, italic, inline code, and links)
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  if (!text) return [];
+
+  // Convert __bold__ to **bold** and _italic_ to *italic*
+  let processed = text;
+  processed = processed.replace(/__(.*?)__/g, '**$1**');
+  processed = processed.replace(/_(.*?)_/g, '*$1*');
+
+  // Tokenize based on common markdown tags
+  const regex = /(\[.*?\]\(.*?\))|(\*\*.*?\*\*)|(\*.*?\*)|(`.*?`)/g;
+  const parts = processed.split(regex);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    // Link matching: [text](url)
+    if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+      const match = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        return (
+          <a
+            key={index}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
+          >
+            {match[1]}
+          </a>
+        );
+      }
+    }
+
+    // Bold matching: **text**
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={index} className="font-bold text-white">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    // Italic matching: *text*
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return (
+        <em key={index} className="italic text-gray-200">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+
+    // Inline code matching: `text`
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code
+          key={index}
+          className="px-1.5 py-0.5 rounded bg-indigo-950/40 border border-indigo-500/10 text-indigo-300 font-mono text-xs"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+
+    return <span key={index}>{part}</span>;
+  }).filter(Boolean) as React.ReactNode[];
+}
+
 export default function ArticleContent({ 
+  postId,
   content, 
   adDensity, 
   activeNetwork, 
@@ -34,9 +104,22 @@ export default function ArticleContent({
   const [showFloatingAd, setShowFloatingAd] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string>('');
 
+  // 0. Client-Side views increment
+  useEffect(() => {
+    if (postId) {
+      fetch(`/api/posts/${postId}/view`, { method: 'POST' }).catch((err) => {
+        console.warn('Failed to increment views asynchronously:', err);
+      });
+    }
+  }, [postId]);
+
   // 1. Markdown Parser (Line-by-Line Compiler)
   const parseMarkdown = (text: string): Block[] => {
-    const lines = text.split('\n');
+    // Normalize newlines and resolve double-escaped newlines
+    const normalizedText = text
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n');
+    const lines = normalizedText.split('\n');
     const blocks: Block[] = [];
     let currentBlock: string[] = [];
     let inCode = false;
@@ -182,18 +265,18 @@ export default function ArticleContent({
       const key = `block-${index}`;
 
       if (block.type === 'h1') {
-        element = <h1 key={key} id={block.id} className="text-3xl font-extrabold text-white mt-12 mb-6 scroll-mt-24">{block.content}</h1>;
+        element = <h1 key={key} id={block.id} className="text-3xl font-extrabold text-white mt-12 mb-6 scroll-mt-24">{renderInlineMarkdown(block.content)}</h1>;
       } else if (block.type === 'h2') {
-        element = <h2 key={key} id={block.id} className="text-2xl font-bold text-white mt-10 mb-5 pb-2 border-b border-[rgba(255,255,255,0.06)] scroll-mt-24">{block.content}</h2>;
+        element = <h2 key={key} id={block.id} className="text-2xl font-bold text-white mt-10 mb-5 pb-2 border-b border-[rgba(255,255,255,0.06)] scroll-mt-24">{renderInlineMarkdown(block.content)}</h2>;
       } else if (block.type === 'h3') {
-        element = <h3 key={key} id={block.id} className="text-xl font-bold text-white mt-8 mb-4 scroll-mt-24">{block.content}</h3>;
+        element = <h3 key={key} id={block.id} className="text-xl font-bold text-white mt-8 mb-4 scroll-mt-24">{renderInlineMarkdown(block.content)}</h3>;
       } else if (block.type === 'p') {
         pCount++;
-        element = <p key={key} className="text-gray-300 leading-relaxed mb-6 text-sm sm:text-base">{block.content}</p>;
+        element = <p key={key} className="text-gray-300 leading-relaxed mb-6 text-sm sm:text-base">{renderInlineMarkdown(block.content)}</p>;
       } else if (block.type === 'list') {
         const listItems = block.content.split('\n').map((li, liIdx) => {
           const cleanLi = li.replace(/^(\*\s*|-\s*|\d+\.\s*)/, '').trim();
-          return <li key={liIdx} className="mb-2 text-gray-300">{cleanLi}</li>;
+          return <li key={liIdx} className="mb-2 text-gray-300">{renderInlineMarkdown(cleanLi)}</li>;
         });
         const isOrdered = /^\d+\.\s/.test(block.content);
         element = isOrdered ? (

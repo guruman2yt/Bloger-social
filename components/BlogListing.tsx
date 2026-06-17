@@ -103,8 +103,9 @@ export default function BlogListing({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {filteredPosts.map((post, idx) => {
             const card = (
-              <article 
+              <Link 
                 key={post.id}
+                href={`/blog/${post.slug}`}
                 className="group flex flex-col rounded-2xl border border-[rgba(99,102,241,0.1)] bg-[rgba(17,12,28,0.2)] hover:bg-[rgba(17,12,28,0.4)] overflow-hidden shadow-lg transition-all duration-300 hover:border-indigo-500/30 hover:-translate-y-1 hover:shadow-indigo-500/5"
               >
                 {/* Post Cover image */}
@@ -154,16 +155,15 @@ export default function BlogListing({
                   <div className="mt-6 pt-4 border-t border-[rgba(255,255,255,0.05)] flex items-center justify-between text-xs">
                     <span className="text-gray-400">By <span className="font-semibold text-gray-300">{post.author}</span></span>
                     
-                    <Link 
-                      href={`/blog/${post.slug}`}
+                    <span 
                       className="flex items-center space-x-1 text-indigo-400 group-hover:text-indigo-300 font-semibold group-hover:translate-x-0.5 transition-all"
                     >
                       <span>Read Article</span>
                       <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                    </span>
                   </div>
                 </div>
-              </article>
+              </Link>
             );
 
             // Inject AdUnit after the 2nd card

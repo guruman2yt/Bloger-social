@@ -74,11 +74,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
     notFound();
   }
 
-  // 2. Increment post view count in SQLite database
-  await prisma.post.update({
-    where: { id: post.id },
-    data: { views: { increment: 1 } },
-  });
+  // 2. Views are now incremented client-side inside the ArticleContent component to prevent blocking server-side rendering.
 
   // Fetch global settings from database
   const dbSettings = await prisma.setting.findMany();
@@ -205,6 +201,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
 
         {/* Main Post Content & Dynamic Sidebar with Ad density control */}
         <ArticleContent 
+          postId={post.id}
           content={post.content} 
           adDensity={settings.adDensity} 
           activeNetwork={settings.activeNetwork} 
