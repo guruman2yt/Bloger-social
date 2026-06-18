@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Script from "next/script";
+import { prisma } from "@/lib/db";
+import { ADS_ENABLED, ACTIVE_AD_NETWORK, ADS_CONFIG } from "@/lib/ads-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,11 +60,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let adsEnabled = ADS_ENABLED;
+  let activeNetwork = ACTIVE_AD_NETWORK;
+
+  try {
+    const dbSettings = await prisma.setting.findMany();
+    dbSettings.forEach((s) => {
+      if (s.key === "adsEnabled") adsEnabled = s.value === "true";
+      if (s.key === "activeNetwork") activeNetwork = s.value as any;
+    });
+  } catch (error) {
+    console.error("Failed to fetch settings in RootLayout:", error);
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+
   return (
     <html
       lang="en"
@@ -71,6 +89,24 @@ export default function RootLayout({
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
+        
+        {/* Global Adsterra (Addstra) scripts for Popunder and Social Bar */}
+        {adsEnabled && activeNetwork === "addstra" && isProduction && (
+          <>
+            {ADS_CONFIG.addstra.popunderUrl && (
+              <Script
+                src={ADS_CONFIG.addstra.popunderUrl}
+                strategy="afterInteractive"
+              />
+            )}
+            {ADS_CONFIG.addstra.socialBarUrl && (
+              <Script
+                src={ADS_CONFIG.addstra.socialBarUrl}
+                strategy="afterInteractive"
+              />
+            )}
+          </>
+        )}
       </body>
     </html>
   );

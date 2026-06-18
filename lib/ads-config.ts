@@ -15,7 +15,13 @@ export const ADS_CONFIG = {
   
   // Addstra Configurations
   addstra: {
-    scriptUrl: process.env.NEXT_PUBLIC_ADDSTRA_SCRIPT_URL || '//adsterra.com/sites/xyz/banner.js',
+    popunderUrl: process.env.NEXT_PUBLIC_ADDSTRA_POPUNDER_URL || '',
+    nativeBannerUrl: process.env.NEXT_PUBLIC_ADDSTRA_NATIVE_BANNER_URL || '',
+    nativeBannerContainerId: process.env.NEXT_PUBLIC_ADDSTRA_NATIVE_BANNER_CONTAINER_ID || '',
+    smartlinkUrl: process.env.NEXT_PUBLIC_ADDSTRA_SMARTLINK_URL || '',
+    socialBarUrl: process.env.NEXT_PUBLIC_ADDSTRA_SOCIAL_BAR_URL || '',
+    banner728x90Key: process.env.NEXT_PUBLIC_ADDSTRA_BANNER_728X90_KEY || '',
+    banner300x250Key: process.env.NEXT_PUBLIC_ADDSTRA_BANNER_300X250_KEY || '',
   },
 
   // Monetag Configurations

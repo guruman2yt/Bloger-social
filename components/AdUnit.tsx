@@ -78,13 +78,17 @@ export default function AdUnit({
   // 1. Connection check: Verify network credentials exist and are not placeholder
   let isConnected = false;
   const clientVal = adsenseClientId !== undefined ? adsenseClientId : ADS_CONFIG.adsense.clientId;
-  const addstraVal = addstraScriptUrl !== undefined ? addstraScriptUrl : ADS_CONFIG.addstra.scriptUrl;
+  const addstraVal = addstraScriptUrl !== undefined ? addstraScriptUrl : ADS_CONFIG.addstra.popunderUrl;
   const monetagVal = monetagScriptUrl !== undefined ? monetagScriptUrl : ADS_CONFIG.monetag.scriptUrl;
 
   if (activeNetwork === 'adsense') {
     isConnected = !!clientVal && clientVal.trim() !== '' && clientVal !== 'ca-pub-xxxxxxxxxxxxxxxx';
   } else if (activeNetwork === 'addstra') {
-    isConnected = !!addstraVal && addstraVal.trim() !== '' && addstraVal !== '//adsterra.com/sites/xyz/banner.js';
+    isConnected = (!!ADS_CONFIG.addstra.banner728x90Key && ADS_CONFIG.addstra.banner728x90Key !== '') ||
+                  (!!ADS_CONFIG.addstra.banner300x250Key && ADS_CONFIG.addstra.banner300x250Key !== '') ||
+                  (!!ADS_CONFIG.addstra.nativeBannerUrl && ADS_CONFIG.addstra.nativeBannerUrl !== '') ||
+                  (!!ADS_CONFIG.addstra.popunderUrl && ADS_CONFIG.addstra.popunderUrl !== '') ||
+                  (!!addstraVal && addstraVal.trim() !== '' && addstraVal !== '//adsterra.com/sites/xyz/banner.js');
   } else if (activeNetwork === 'monetag') {
     isConnected = !!monetagVal && monetagVal.trim() !== '' && monetagVal !== 'https://cdn.monetag.io/ads.js';
   }
@@ -123,22 +127,60 @@ export default function AdUnit({
   useEffect(() => {
     if (isLocalhost || !isEnabled || !adRef.current) return;
 
-    if (activeNetwork === 'addstra' || activeNetwork === 'monetag') {
-      const scriptUrl = activeNetwork === 'addstra' ? addstraVal : monetagVal;
-      if (!scriptUrl) return;
+    if (activeNetwork === 'addstra') {
+      adRef.current.innerHTML = ''; // Clear previous content
 
-      // Clear previous content to avoid duplicate ads on re-render
+      const isVertical = format === 'vertical' || slot.includes('sidebar') || slot.includes('sticky');
+      const isNativeMid = slot === 'in-article-mid';
+
+      if (isNativeMid) {
+        // Native Banner format
+        const containerId = ADS_CONFIG.addstra.nativeBannerContainerId || 'container-b2c5ad0d62b4152cf2eea16cc9f4fab2';
+        
+        // Create the container element dynamically
+        const containerDiv = document.createElement('div');
+        containerDiv.id = containerId;
+        adRef.current.appendChild(containerDiv);
+
+        // Load Native script
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = ADS_CONFIG.addstra.nativeBannerUrl || 'https://pl29760559.effectivecpmnetwork.com/b2c5ad0d62b4152cf2eea16cc9f4fab2/invoke.js';
+        script.async = true;
+        script.setAttribute('data-cfasync', 'false');
+        
+        adRef.current.appendChild(script);
+      } else {
+        // Display Banner (728x90 or 300x250)
+        const bannerKey = isVertical
+          ? (ADS_CONFIG.addstra.banner300x250Key || '2f5608701096acac26f0c49164a5defe')
+          : (ADS_CONFIG.addstra.banner728x90Key || '6a8079de70f9f8d2415c13ee7ae274ef');
+
+        // Configure window atOptions object
+        (window as any).atOptions = {
+          key: bannerKey,
+          format: 'iframe',
+          height: isVertical ? 250 : 90,
+          width: isVertical ? 300 : 728,
+          params: {}
+        };
+
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = `https://www.highperformanceformat.com/${bannerKey}/invoke.js`;
+        script.async = true;
+
+        adRef.current.appendChild(script);
+      }
+    } else if (activeNetwork === 'monetag') {
       adRef.current.innerHTML = '';
-
-      // Create and append the ad network script element
       const script = document.createElement('script');
       script.type = 'text/javascript';
-      script.src = scriptUrl;
+      script.src = monetagVal;
       script.async = true;
-      
       adRef.current.appendChild(script);
     }
-  }, [activeNetwork, isEnabled, isLocalhost, addstraVal, monetagVal]);
+  }, [activeNetwork, isEnabled, isLocalhost, format, slot, addstraVal, monetagVal]);
 
   const handleAdClick = async () => {
     if (!isEnabled) return;
@@ -160,8 +202,14 @@ export default function AdUnit({
 
   // 3. In production, load actual ad network scripts
   if (!isLocalhost) {
+    const isVertical = format === 'vertical' || slot.includes('sidebar') || slot.includes('sticky');
     return (
-      <div ref={adRef} className="ad-container my-6 flex justify-center w-full min-h-[90px] text-center">
+      <div 
+        ref={adRef} 
+        className={`ad-container my-6 flex justify-center w-full text-center ${
+          isVertical ? 'min-h-[250px] min-w-[300px]' : 'min-h-[90px]'
+        }`}
+      >
         {activeNetwork === 'adsense' && (
           <>
             <Script
@@ -226,7 +274,7 @@ export default function AdUnit({
       </div>
       
       <a
-        href={mockAd.url}
+        href={activeNetwork === 'addstra' && ADS_CONFIG.addstra.smartlinkUrl ? ADS_CONFIG.addstra.smartlinkUrl : mockAd.url}
         target="_blank"
         rel="noopener noreferrer"
         onClick={handleAdClick}
